@@ -13,7 +13,7 @@ curl -s -G "$API_URL" \
 # 提取最新微博内容
 LATEST_TEXT=$(jq -r '.statuses[0].text' $OUTPUT_FILE | sed 's/<[^>]*>//g') 
 CREATED_AT=$(jq -r '.statuses[0].created_at' $OUTPUT_FILE)
-BLOG_URL="https://weibo.com/$USER_ID/$(jq -r '.statuses[0].id' $OUTPUT_FILE)"
+BLOG_URL="https://weibo.com/u/$USER_ID/$(jq -r '.statuses[0].id' $OUTPUT_FILE)"
 
 # 构造企业微信消息
 MSG_JSON=$(cat <<EOF
