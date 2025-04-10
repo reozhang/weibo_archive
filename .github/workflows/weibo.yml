@@ -16,3 +16,10 @@
              # 此处需添加抓取脚本（可参考证据3的Shell脚本）
              curl -s "https://api.weibo.com/2/statuses/user_timeline.json?uid=$WEIBO_UIDS&access_token=$TOKEN" > weibo_data.json
              # 将数据保存为文件
+     - name: Send to WeChat
+       run: |
+         CONTENT=$(cat weibo_data.json | jq '.statuses[0].text') # 提取最新微博
+         curl -X POST \
+           -H "Content-Type: application/json" \
+           -d "{\"msgtype\": \"text\", \"text\": {\"content\": \"今日微博更新：$CONTENT\"}}" \
+           https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=你的机器人KEY
