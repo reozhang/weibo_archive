@@ -1,0 +1,18 @@
+     name: Weibo Archiver
+     on:
+       schedule:
+         - cron: "0 */6 * * *" # 每6小时执行一次
+     jobs:
+       archive:
+         runs-on: ubuntu-latest
+         steps:
+         - name: Checkout
+           uses: actions/checkout@v2
+         - name: Run Archiver
+           env:
+             TOKEN: ${{ secrets.TOKEN }} # 需在仓库设置中添加名为TOKEN的Secret
+             WEIBO_UIDS: "7519797263" # 多个ID用|分隔
+           run: |
+             # 此处需添加抓取脚本（可参考证据3的Shell脚本）
+             curl -s "https://api.weibo.com/2/statuses/user_timeline.json?uid=$WEIBO_UIDS&access_token=$TOKEN" > weibo_data.json
+             # 将数据保存为文件
