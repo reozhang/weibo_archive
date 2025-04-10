@@ -1,6 +1,6 @@
 #!/bin/bash
 # 抓取最新微博并发送到企业微信
-API_URL="https://api.weibo.com/2/statuses/user_timeline.json"
+API_URL="https://api.weibo.com/2/users/show.json?access_token=$ACCESS_TOKEN&uid=$USER_ID"
 OUTPUT_FILE="/tmp/weibo.json"
 
 # 抓取最新10条微博
