@@ -1,11 +1,13 @@
 #!/bin/bash
 # 抓取最新微博并发送到企业微信
-API_URL="https://api.weibo.com/2/users/show.json?access_token=$ACCESS_TOKEN&uid=$USER_ID"
+API_URL="https://api.weibo.com/2/statuses/user_timeline.json?uid=$USER_IDS&access_token=$ACCESS_TOKEN"
 OUTPUT_FILE="/tmp/weibo.json"
 
 # 在Github Actions脚本中添加调试命令
 echo "调试：当前目录是 $(pwd)"
-curl -v -G "$API_URL" --data-urlencode "access_token=$ACCESS_TOKEN" --data-urlencode "uid=$USER_ID"
+curl -v -G "$API_URL" 
+  --data-urlencode "access_token=$ACCESS_TOKEN" 
+  --data-urlencode "uid=$USER_ID"
 
 # 抓取最新10条微博
 curl -s -G "$API_URL" \
