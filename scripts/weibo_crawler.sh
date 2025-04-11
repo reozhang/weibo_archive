@@ -7,9 +7,6 @@ OUTPUT_FILE="/tmp/weibo.json"
 
 # 在Github Actions脚本中添加调试命令
 echo "调试：当前目录是 $(pwd)"
-curl -v -G "$API_URL" 
-  --data-urlencode "access_token=$ACCESS_TOKEN" 
-  --data-urlencode "uid=$USER_ID"
 
 # 抓取最新10条微博
 curl -s -G "$API_URL" \
