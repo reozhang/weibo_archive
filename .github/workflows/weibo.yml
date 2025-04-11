@@ -1,7 +1,7 @@
 name: Weibo Monitor
 on:
   schedule:
-    - cron: "0 1,10 * * *"  # UTC时间1:00和10:00执行（对应北京时间9:00和18:00）
+    - cron: "30 2,9 * * *"  # UTC时间2:30和9:30执行（对应北京时间10:30和17:30）
   workflow_dispatch: # 允许手动触发
 
 jobs:
