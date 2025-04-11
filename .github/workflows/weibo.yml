@@ -39,3 +39,9 @@ jobs:
         chmod +x ./scripts/weibo_crawler.sh
         ./scripts/weibo_crawler.sh 2>&1 | tee -a run.log  # 保存详细日志
         
+        # 上传日志供调试
+        echo "Uploading logs..."
+        curl -s -X POST -H "Authorization: token ${{ secrets.GITLOG_TOKEN }}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          -F "file=@run.log" \
+          "https://uploads.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/logs"
