@@ -1,26 +1,41 @@
 name: Weibo Monitor
 on:
   schedule:
-    - cron: "0 9,18 * * *" # 每天9:00和18:00执行（UTC时间需+8）
+    - cron: "0 1,10 * * *"  # UTC时间1:00和10:00执行（对应北京时间9:00和18:00）
   workflow_dispatch: # 允许手动触发
 
 jobs:
   monitor:
     runs-on: ubuntu-latest
+    env:
+      GITHUB_WORKSPACE: ${{ github.workspace }}  # 显式定义工作路径
+      
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # 确保检出完整历史记录
 
     - name: Setup Environment
       run: |
         sudo apt-get update
-        sudo apt-get install -y jq  # JSON解析工具
-
+        sudo apt-get install -y jq curl  # 显式安装curl JSON解析工具
+        echo "环境工具版本："
+        jq --version
+        curl --version
+        
     - name: Run Weibo Crawler
       env:
         ACCESS_TOKEN: ${{ secrets.WEIBO_TOKEN }}
         WEBHOOK_URL: ${{ secrets.WECHAT_WEBHOOK }}
-        USER_ID: "7519797263"  # 如：123456789
+        USER_ID: "7519797263"  # 添加微博用户ID
+        
       run: |
+        # 调试信息
+        echo "工作目录：$GITHUB_WORKSPACE"
+        ls -l ./scripts
+        
+        # 增加执行权限并运行
         chmod +x ./scripts/weibo_crawler.sh
-        ./scripts/weibo_crawler.sh
+        ./scripts/weibo_crawler.sh 2>&1 | tee -a run.log  # 保存详细日志
+        
