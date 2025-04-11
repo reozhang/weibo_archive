@@ -1,6 +1,8 @@
 #!/bin/bash
+set -euo pipefail
+
 # 抓取最新微博并发送到企业微信
-API_URL="https://api.weibo.com/2/statuses/user_timeline.json?uid=$USER_IDS&access_token=$ACCESS_TOKEN"
+API_URL="https://api.weibo.com/2/statuses/user_timeline.json?uid=$USER_ID&access_token=$ACCESS_TOKEN"
 OUTPUT_FILE="/tmp/weibo.json"
 
 # 在Github Actions脚本中添加调试命令
