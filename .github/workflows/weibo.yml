@@ -27,6 +27,7 @@ jobs:
     - name: Run Weibo Crawler
       env:
         ACCESS_TOKEN: ${{ secrets.WEIBO_TOKEN }}
+        APP_KEY: ${{ secrets.WEIBO_APP_KEY }}  # 新增APP_KEY
         WEBHOOK_URL: ${{ secrets.WECHAT_WEBHOOK }}
         USER_ID: "7519797263"  # 添加微博用户ID
         
