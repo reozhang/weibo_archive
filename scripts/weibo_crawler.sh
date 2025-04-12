@@ -5,6 +5,7 @@ set -euo pipefail
 # --- 配置区 ---
 API_URL="https://api.weibo.com/2/statuses/user_timeline.json"
 OUTPUT_FILE="$GITHUB_WORKSPACE/weibo.json"
+APP_KEY="APP_KEY"  # 新增至Github Secrets
 
 # --- 参数验证 ---
 if [ -z "$USER_ID" ] || [ -z "$ACCESS_TOKEN" ] || [ -z "$WEBHOOK_URL" ]; then
@@ -15,32 +16,44 @@ fi
 # --- 创建目录 ---
 mkdir -p "$(dirname "$OUTPUT_FILE")"
 
-# --- 添加HTTP状态码，抓取数据 ---
+# 调试：显示完整请求命令
+echo "调试：API请求命令"
+echo "curl -G \"$API_URL\" 
+--data-urlencode \"source=$APP_KEY\" 
+--data-urlencode \"access_token=$ACCESS_TOKEN\" 
+--data-urlencode \"uid=$USER_ID\""
+
+# 请求微博API，抓取数据，新增source参数
 HTTP_CODE=$(curl -s -o "$OUTPUT_FILE" -w "%{http_code}" -G "$API_URL" \
+  --data-urlencode "source=$APP_KEY" \
   --data-urlencode "access_token=$ACCESS_TOKEN" \
   --data-urlencode "uid=$USER_ID" \
-  --data-urlencode "count=10")
+  --data-urlencode "count=20")
 
-# --- 内容验证响应 ---
+# 验证响应 ---
 if [ "$HTTP_CODE" != "200" ]; then
   echo "##[error] API请求失败，状态码：$HTTP_CODE"
   if [ -f "$OUTPUT_FILE" ]; then
-    echo "##[error] 错误详情：$(jq . "$OUTPUT_FILE")"
+    echo "##[error] 错误详情：$(jq -c . "$OUTPUT_FILE")"
   fi
   exit 1
 fi
 
-if ! jq -e '.statuses | length > 0' "$OUTPUT_FILE" > /dev/null; then
-  echo "##[error] 未获取到有效微博数据"
+# 新版数据结构验证（兼容移动端API）
+if ! jq -e '.statuses? // .data.list?' "$OUTPUT_FILE" > /dev/null; then
+  echo "##[error] 未获取到有效微博数据，原始响应："
+  cat "$OUTPUT_FILE"
   exit 1
 fi
 
-# --- 数据解析 提取最新微博内容---
-LATEST_TEXT=$(jq -r '.statuses[0].text' "$OUTPUT_FILE" | sed 's/<[^>]*>//g')
-CREATED_AT=$(jq -r '.statuses[0].created_at' "$OUTPUT_FILE")
-WEIBO_ID=$(jq -r '.statuses[0].id' "$OUTPUT_FILE")
-BLOG_URL="https://weibo.com/$USER_ID/$WEIBO_ID"
-
+# 数据解析（兼容多版本API）
+LATEST_TEXT=$(jq -r '
+  if .statuses then 
+    .statuses[0].text 
+  else 
+    .data.list[0].text 
+  end' "$OUTPUT_FILE" | sed 's/<[^>]*>//g')
+  
 # --- 构造安全JSON 企业微信消息---
 MSG_JSON=$(jq -n \
   --arg title "E大微博更新提醒 - $CREATED_AT" \
