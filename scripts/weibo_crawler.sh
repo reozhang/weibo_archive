@@ -1,15 +1,15 @@
 #!/bin/bash
 set -euo pipefail
 
-# 抓取最新微博并发送到企业微信
 # --- 配置区 ---
-API_URL="https://api.weibo.com/2/statuses/user_timeline.json"
+API_URL="https://weibo.com/ajax/statuses/mymblog"  # 更改为移动端API
 OUTPUT_FILE="$GITHUB_WORKSPACE/weibo.json"
-APP_KEY="WEIBO_APP_KEY"  # 新增至Github Secrets
+USER_ID="$USER_ID"  # 要监控的微博用户UID
+WEBHOOK_URL="$WEBHOOK_URL"
 
 # --- 参数验证 ---
-if [ -z "$USER_ID" ] || [ -z "$ACCESS_TOKEN" ] || [ -z "$WEBHOOK_URL" ]; then
-  echo "##[error] 缺失必要参数：USER_ID/ACCESS_TOKEN/WEBHOOK_URL"
+if [ -z "$USER_ID" ] || [ -z "$WEBHOOK_URL" ]; then
+  echo "##[error] 缺失必要参数：USER_ID/WEBHOOK_URL"
   exit 1
 fi
 
