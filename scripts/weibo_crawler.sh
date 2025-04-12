@@ -5,7 +5,7 @@ set -euo pipefail
 # --- 配置区 ---
 API_URL="https://api.weibo.com/2/statuses/user_timeline.json"
 OUTPUT_FILE="$GITHUB_WORKSPACE/weibo.json"
-APP_KEY="APP_KEY"  # 新增至Github Secrets
+APP_KEY="WEIBO_APP_KEY"  # 新增至Github Secrets
 
 # --- 参数验证 ---
 if [ -z "$USER_ID" ] || [ -z "$ACCESS_TOKEN" ] || [ -z "$WEBHOOK_URL" ]; then
