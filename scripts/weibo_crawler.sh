@@ -6,25 +6,45 @@ API_URL="https://weibo.com/ajax/statuses/mymblog"  # 更改为移动端API
 OUTPUT_FILE="$GITHUB_WORKSPACE/weibo.json"
 USER_ID="$USER_ID"  # 要监控的微博用户UID
 WEBHOOK_URL="$WEBHOOK_URL"
+COOKIE="SUB=_2A25K82oTDeRhGedL7FsW8y3Nwz6IHXVmcePbrDV8PUNbmtAbLXHBkW9NVIHMLwNIRyQFBudNtKS2bRU4I_RGBopR"  # 必须配置
 
-# --- 参数验证 ---
-if [ -z "$USER_ID" ] || [ -z "$WEBHOOK_URL" ]; then
-  echo "##[error] 缺失必要参数：USER_ID/WEBHOOK_URL"
+# --- 请求参数验证 ---
+if [ -z "$COOKIE" ] || [ -z "$USER_ID" ]; then
+  echo "##[error] 必需参数缺失"
   exit 1
 fi
 
 # --- 创建目录 ---
 mkdir -p "$(dirname "$OUTPUT_FILE")"
 
-# --- 抓取公开微博数据 ---
-HTTP_CODE=$(curl -s -o "$OUTPUT_FILE" -w "%{http_code}" \
-  -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" \
+# --- 抓取数据（带反爬措施）---
+sleep $((RANDOM % 10 + 5))  # 随机延迟5-15秒
+
+HTTP_CODE=$(curl -v -s -o "$OUTPUT_FILE" -w "%{http_code}" -L --max-redirs 3 \
+  -H "Cookie: $COOKIE" \
+  -H "User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Weibo (iPhone13,3__weibo__12.5.0__iphone__os15.0)" \
+  -H "Referer: https://m.weibo.cn/u/$USER_ID" \
   "${API_URL}?uid=${USER_ID}&page=1&feature=0")
 
 # --- 响应验证 ---
 if [ "$HTTP_CODE" != "200" ]; then
-  echo "##[error] API请求失败，状态码：$HTTP_CODE"
+  echo "##[error] 请求失败，状态码：$HTTP_CODE"
+  echo "调试信息："
+  grep -E '^< HTTP|Location:' "$OUTPUT_FILE"
   exit 1
+fi
+
+# --- 数据解析（新增重定向检测）---
+if grep -q 'login.sina.com.cn' "$OUTPUT_FILE"; then
+  echo "##[error] 需要重新登录（Cookie失效）"
+  exit 1
+fi
+
+# 添加Cookie失效自动通知
+if grep -q 'login.sina.com.cn' "$OUTPUT_FILE"; then
+  curl -X POST -H "Content-Type: application/json" \
+    -d '{"msgtype":"text","text":{"content":"微博Cookie已失效，请及时更新！"}}' \
+    "$WEBHOOK_URL"
 fi
 
 if ! jq -e '.data.list | length > 0' "$OUTPUT_FILE" > /dev/null; then
