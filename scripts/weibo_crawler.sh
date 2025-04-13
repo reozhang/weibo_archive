@@ -2,11 +2,11 @@
 set -euo pipefail
 
 # --- 配置区 ---
-API_URL="https://weibo.com/ajax/statuses/mymblog"  # 更改为移动端API
+API_URL="https://m.weibo.cn/api/container/getIndex"  # 更新为有效API地址
 OUTPUT_FILE="$GITHUB_WORKSPACE/weibo.json"
 USER_ID="$USER_ID"  # 要监控的微博用户UID
 WEBHOOK_URL="$WEBHOOK_URL"
-COOKIE="SUB=_2A25K82oTDeRhGedL7FsW8y3Nwz6IHXVmcePbrDV8PUNbmtAbLXHBkW9NVIHMLwNIRyQFBudNtKS2bRU4I_RGBopR"  # 必须配置
+COOKIE="SUB=_2A25K82oTDeRhGedL7FsW8y3Nwz6IHXVmcePbrDV8PUNbmtAbLXHBkW9NVIHMLwNIRyQFBudNtKS2bRU4I_RGBopR; SUBP=0033WrSXqPxfM725Ws9jqgMF55529P9D9W58SbVGVkK3ivfE9Smzfy6Z5NHD95QpSKM4S0e0eKnEWs4Dqcj6i--ci-zRiKnfi--RiKy2i-zNi--fiKnfiKn0i--fi-z4i-zXi--Xi-zRiKn7i--Ni-iWi-isi--NiK.XiKLs; "  # 必须配置
 
 # --- 请求参数验证 ---
 if [ -z "$COOKIE" ] || [ -z "$USER_ID" ]; then
