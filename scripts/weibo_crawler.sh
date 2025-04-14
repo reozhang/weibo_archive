@@ -3,10 +3,16 @@ set -euo pipefail
 
 # --- 配置区 ---
 API_URL="https://m.weibo.cn/api/container/getIndex"  # 更新为有效API地址
-OUTPUT_FILE="$GITHUB_WORKSPACE/weibo.json"
-USER_ID="$USER_ID"  # 要监控的微博用户UID
-WEBHOOK_URL="$WEBHOOK_URL"
+OUTPUT_FILE="${GITHUB_WORKSPACE:-./weibo.json}"
+USER_ID="${USER_ID:-}"  # 要监控的微博用户UID
+WEBHOOK_URL="${WEBHOOK_URL:-}"
 COOKIE="SUB=_2A25K-PAUDeRhGedL7FsW8y3Nwz6IHXVmdA3crDV6PUJbktAbLVPtkW1NVIHML4psSgJa6KrNJkyvcDMHsc2a_0k7; SUBP=0033WrSXqPxfM725Ws9jqgMF55529P9D9W58SbVGVkK3ivfE9Smzfy6Z5JpX5KzhUgL.Fo2fS0.Ne0ep1hz2dJLoI0YLxKqLBonL1h-LxKnL12BLBoMLxK-L1h-L1heLxK-LBo.LBoBLxKBLBonL1h5LxKMLB.2LB.qLxKML1KBL1-qt; SSOLoginState=1744601158"  # 必须配置
+
+# 检查必要的环境变量是否设置
+if [ -z "$USER_ID" ] || [ -z "$WEBHOOK_URL" ]; then
+    echo "##[error] USER_ID 或 WEBHOOK_URL 环境变量未设置"
+    exit 1
+fi
 
 # --- 容器ID生成（2025最新格式）---
 declare -a CONTAINER_IDS=(
@@ -29,9 +35,16 @@ mkdir -p "$(dirname "$OUTPUT_FILE")"
 for CID in "${CONTAINER_IDS[@]}"; do
   sleep $((RANDOM % 10 + 5))
   
+  # 第一次请求时不尝试从文件中提取 Cookie
+  if [ -s "$OUTPUT_FILE" ]; then
+    EXTRA_COOKIE=$(grep 'set-cookie' "$OUTPUT_FILE" 2>/dev/null | 
+      awk -F';' '{print $1}' | sed 's/< //g' | tr '\n' ';')
+  else
+    EXTRA_COOKIE=""
+  fi
+  
   HTTP_CODE=$(curl -v -s -o "$OUTPUT_FILE" -w "%{http_code}" -L \
-    -H "Cookie: $COOKIE; $(grep 'set-cookie' "$OUTPUT_FILE" 2>/dev/null | 
-      awk -F';' '{print $1}' | sed 's/< //g' | tr '\n' ';')" \
+    -H "Cookie: $COOKIE; $EXTRA_COOKIE" \
     -H "User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 17_6_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Weibo (iPhone15,3__weibo__17.2.0__iphone__os17.6.1)" \
     -H "X-XSRF-TOKEN: ${XSRF_TOKEN:-d41d8cd98f00b204e9800998ecf8427e}" \
     -H "Referer: https://m.weibo.cn/u/$USER_ID" \
