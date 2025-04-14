@@ -48,7 +48,7 @@ jobs:
           "https://uploads.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/logs"
 
     - name: Upload all logs as artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4 # 尝试使用最新版本
       with:
         name: weibo-monitor-logs
         path: |
