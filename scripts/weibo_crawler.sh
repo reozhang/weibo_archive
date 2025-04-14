@@ -27,7 +27,7 @@ mkdir -p "$(dirname "$OUTPUT_FILE")"
 
 # --- 请求执行 ---
 for CID in "${CONTAINER_IDS[@]}"; do
-  sleep $((RANDOM % 25 + 15))
+  sleep $((RANDOM % 10 + 5))
   
   HTTP_CODE=$(curl -v -s -o "$OUTPUT_FILE" -w "%{http_code}" -L \
     -H "Cookie: $COOKIE; $(grep 'set-cookie' "$OUTPUT_FILE" 2>/dev/null | 
@@ -35,10 +35,15 @@ for CID in "${CONTAINER_IDS[@]}"; do
     -H "User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 17_6_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Weibo (iPhone15,3__weibo__17.2.0__iphone__os17.6.1)" \
     -H "X-XSRF-TOKEN: ${XSRF_TOKEN:-d41d8cd98f00b204e9800998ecf8427e}" \
     -H "Referer: https://m.weibo.cn/u/$USER_ID" \
-    "${API_URL}?containerid=$CID&page=1&luicode=10000011&lfid=230283$USER_ID&from=10_9094")
+    "${API_URL}?containerid=$CID&page=1&luicode=10000011&lfid=100505$USER_ID&from=10_9094")
 
-  update_xsrf_token
-  [ "$HTTP_CODE" == "200" ] && break
+ if [ "$HTTP_CODE" != "200" ]; then
+    echo "##[error] 请求 $CID 失败，HTTP 状态码: $HTTP_CODE"
+    jq '.' "$OUTPUT_FILE"
+  else
+    update_xsrf_token
+    break
+  fi
 done
 
 # --- 数据解析增强 ---
@@ -103,4 +108,3 @@ fi
 # --- 发送到企业微信 ---
 curl -X POST -H "Content-Type: application/json" \
   -d "$MSG_JSON" "$WEBHOOK_URL"
-  
