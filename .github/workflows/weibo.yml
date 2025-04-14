@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_WORKSPACE: ${{ github.workspace }}  # 显式定义工作路径
+      ACTIONS_STEP_DEBUG: true  # 启用步骤调试日志
+      ACTIONS_RUNNER_DEBUG: true  # 启用运行器诊断日志
       
     steps:
     - name: Checkout code
@@ -44,3 +46,11 @@ jobs:
           -H "Accept: application/vnd.github.v3+json" \
           -F "file=@run.log" \
           "https://uploads.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/logs"
+
+    - name: Upload all logs as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: weibo-monitor-logs
+        path: |
+          run.log
+          /home/runner/.config/gha-runner/runner-diagnostic-logs  # 运行器诊断日志路径
