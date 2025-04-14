@@ -28,7 +28,7 @@ jobs:
         
     - name: Run Weibo Crawler
       env:
-        WEBHOOK_URL: ${{ secrets.WECHAT_WEBHOOK }}
+        WEBHOOK_URL: "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=9110822c-30a1-4c7f-86a8-8078dea08838"   # 企微群机器人Webhook地址
         USER_ID: "7519797263"  # 微博用户ID
         
       run: |
