@@ -37,8 +37,8 @@ jobs:
         ls -l ./scripts
         
         # 增加执行权限并运行
-        chmod +x ./scripts/weibo_crawler_v2.sh
-        ./scripts/weibo_crawler_v2.sh 2>&1 | tee -a run.log  # 保存详细日志
+        chmod +x ./scripts/weibo_crawler.sh
+        ./scripts/weibo_crawler.sh 2>&1 | tee -a run.log  # 保存详细日志
         
         # 上传日志供调试
         echo "Uploading logs..."
