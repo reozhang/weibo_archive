@@ -44,41 +44,61 @@ done
 # --- 数据解析增强 ---
 WEIBO_DATA=$(jq -r '
   (.data.cards // []) | map(select(
-    .card_type? | IN(41, 9, 11, 201, 302) and 
+    .card_type? | IN(41, 9, 11, 201, 302, 1022) and 
     (.mblog? != null) and 
     (.mblog.isDeleted? != true)
   ))[0] // {} | 
   .mblog | {
-    text: (.text | gsub("<.*?>"; "")),
+    text: ((.text // "") | gsub("<.*?>"; "")),
     created_at: (.created_at | strptime("%a %b %d %H:%M:%S %z %Y")? // now | strftime("%Y-%m-%d %H:%M")),
     id: (.id // "unknown"),
-    pics: ([.pics[]?.url] // [])
+    pics: (try ([.pics[]?.url] // []) catch [])
   }' "$OUTPUT_FILE")
-  
+
 # --- 异常处理 ---
-if [[ $(jq -e 'length > 0' <<< "$WEIBO_DATA") != "true" ]]; then
+if [[ $(jq -e '(.text != "") and (.id != "unknown")' <<< "$WEIBO_DATA") != "true" ]]; then
   echo "##[error] 无有效微博数据，调试信息："
   jq '.' "$OUTPUT_FILE"
   exit 1
 fi
 
-# 增强消息模板（支持多图展示）
+# --- 消息构造 ---
 MSG_JSON=$(jq -n \
   --argjson data "$WEIBO_DATA" \
   --arg defaultPic "https://placehold.co/600x400?text=暂无图片" \
-  '{
+  '
+  def process_pics:
+    if length == 0 then
+      [{picurl: $defaultPic}]
+    else
+      [.[0] | {picurl: .}] + (.[1:3] | map({picurl: .}))
+    end;
+  
+  {
     msgtype: "news",
     news: {
-      articles: [{
-        title: "微博更新 - \($data.created_at)",
-        description: "\($data.text[0:200])",
-        url: "https://m.weibo.cn/detail/\($data.id)",
-        picurl: ($data.pics | if length >0 then .[0] else $defaultPic end)
-      }] + [
-        $data.pics[1:3][] | {picurl: .}
-      ]
+      articles: [
+        {
+          title: "微博更新 - \($data.created_at)",
+          description: "\($data.text[0:200])",
+          url: "https://m.weibo.cn/detail/\($data.id)"
+        }] + (
+          $data.pics | 
+          if type == "array" then
+            process_pics
+          else
+            [{picurl: $defaultPic}]
+          end
+        )
     }
   }')
+
+# --- 消息格式验证 ---
+if ! jq -e '.news.articles | length > 0' <<< "$MSG_JSON" >/dev/null; then
+  echo "##[error] 消息格式验证失败："
+  jq '.' <<< "$MSG_JSON"
+  exit 1
+fi
 
 # --- 发送到企业微信 ---
 curl -X POST -H "Content-Type: application/json" \
